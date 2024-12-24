@@ -9,10 +9,12 @@
       href="https://tobiasmaier.info/asn-qr-code-label-generator/"
     />
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    <script 
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
       defer
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
+
     <style>
       @media print {
         /* See https://caniuse.com/css-paged-media */
@@ -154,6 +156,23 @@
             />
           </div>
           <div>
+            <label
+              for="activePreset"
+              class="mb-2 block text-sm font-medium text-gray-900"
+              >Active preset</label
+            >
+            <select
+              id="activePreset"
+              x-model="activePreset"
+              required
+              class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+            >
+              <template x-for="preset in Object.keys(presets)" :key="preset">
+                <option x-text="preset" :value="preset"></option>
+              </template>
+            </select>
+          </div>
+          <div>
             <div class="flex items-start">
               <div class="flex h-5 items-center">
                 <input
@@ -194,24 +213,49 @@
     </div>
 
     <div
-      class="container mx-auto w-[210mm] border px-[8.45mm] py-[13.5mm] print:w-full print:max-w-full print:border-0"
+      class="container mx-auto w-[210mm] border print:w-full print:max-w-full print:border-0"
+      :class="{
+        [`px-[${getPreset().marginLeft}mm]`]: true,
+        [`py-[${getPreset().marginTop}mm]`]: true
+      }"
     >
       <!-- Display QR Code Labels -->
-      <ol class="grid grid-cols-7 gap-x-[2.55mm]">
+      <ol 
+        class="grid"
+        :class="{
+          [`grid-cols-${getPreset().columns}`]: true,
+          [`gap-x-[${getPreset().gapX}mm]`]: true,
+        }"
+      >
         <template x-for="label in labels">
-          <li class="h-[10mm] w-[25.4mm]">
+          <li 
+            :class="{
+              [`h-[${getPreset().labelHeight}mm]`]: true,
+              [`w-[${getPreset().labelWidth}mm]`]: true
+            }"
+          >
             <div
-              class="flex h-[9mm] w-[24.4mm] items-center border-[0.5mm] odd:border-blue-500 even:border-red-300"
-              :class="{'even:border-transparent odd:border-transparent': !borderToggle}"
+              class="flex items-center odd:border-blue-500 even:border-red-300"
+              :class="{
+                'even:border-transparent odd:border-transparent': !borderToggle,
+                [`h-[${getPreset().contentHeight}mm]`]: true,
+                [`w-[${getPreset().contentWidth}mm]`]: true,
+                [`border-[${getPreset().borderWidth}mm]`]: true,
+              }"
             >
-              <img
-                :src="label.qrCodeUrl"
+              <canvas
+                x-init="generateBarcode($el, label.text)"
                 alt=""
                 width="100"
                 height="100"
-                class="mr-[0.5mm] aspect-square h-[9mm] w-[9mm] flex-none"
+                class="aspect-square flex-none"
+                :class="{
+                  [`h-[${getPreset().barcodeSize}mm]`]: true,
+                  [`w-[${getPreset().barcodeSize}mm]`]: true,
+                  [`mr-[${getPreset().barcodeMarginRight}mm]`]: true,
+                }"
                 referrerpolicy="no-referrer"
-              />
+              ></canvas>
               <div
                 class="flex-grow"
                 :class="{
@@ -259,10 +303,39 @@
           leadingZeros: 4,
           borderToggle: false,
           labels: [],
+          selectedPreset: "Avery L4731REV-25",
+          selectedPresetOptions: null,
+          presets: {
+            "Avery L4731REV-25": {
+              columns: 7,
+              rows: 27,
+
+              marginLeft: 8.45,
+              marginRight: 8.45,
+              marginTop: 13.5,
+              marginBottom: 13.5,
+
+              labelWidth: 25.4,
+              labelHeight: 10,
+
+              gapX: 2.55,
+
+              contentWidth: 24.4,
+              contentHeight: 9,
+              barcodeSize: 9,
+              barcodeMarginRight: 0.5,
+              borderWidth: 0.5
+            }
+          },
+
+          getPreset() {
+            return this.presets[this.selectedPreset];
+          },
 
           generateLabels() {
             this.labels = [];
-            let totalLabels = 7 * 27; // 7 columns x 27 rows
+            let preset = this.getPreset();
+            let totalLabels = preset.columns * preset.rows;
             let startNumberInt = parseInt(this.startNumber, 10); // Ensure startNumber is an integer
             let leadingZerosInt = parseInt(this.leadingZeros, 10); // Ensure leadingZeros is an integer
             for (let i = 0; i < totalLabels; i++) {
@@ -272,11 +345,22 @@
                 .padStart(leadingZerosInt + 1, "0");
               let text = this.prefix + paddedNumber;
               // See https://goqr.me/api/doc/create-qr-code/
-              let qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-                text
-              )}`;
+              // let qrCodeUrl = this.generateBarcode(text, preset.barcodeSize);
 
-              this.labels.push({ qrCodeUrl, text });
+              this.labels.push({ text });
+            }
+          },
+          generateBarcode(element, string) {
+            try {
+              bwipjs.toCanvas(element, {
+                      bcid:        'datamatrix',
+                      text:        string,
+                      scale:       1,
+                      height:      this.getPreset().barcodeSize,
+                      includetext: false,
+                  });
+            } catch (e) {
+              console.error("Failed to generate barcode for ", string, e);
             }
           },
           printLabels() {
