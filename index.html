@@ -157,17 +157,35 @@
           </div>
           <div>
             <label
-              for="activePreset"
+              for="selectedPreset"
               class="mb-2 block text-sm font-medium text-gray-900"
               >Active preset</label
             >
             <select
-              id="activePreset"
-              x-model="activePreset"
+              id="selectedPreset"
+              x-model="selectedPreset"
+              required
+              class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+              @change="applySelectedPreset()"
+            >
+              <template x-for="preset in Object.keys(presets)" :key="preset">
+                <option x-text="preset" :value="preset"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label
+              for="barcodeType"
+              class="mb-2 block text-sm font-medium text-gray-900"
+              >Barcode Type</label
+            >
+            <select
+              id="barcodeType"
+              x-model="barcodeType"
               required
               class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
             >
-              <template x-for="preset in Object.keys(presets)" :key="preset">
+              <template x-for="preset in ['qrcode', 'microqrcode', 'code128']" :key="preset">
                 <option x-text="preset" :value="preset"></option>
               </template>
             </select>
@@ -213,64 +231,79 @@
     </div>
 
     <div
-      class="container mx-auto w-[210mm] border print:w-full print:max-w-full print:border-0"
+      class="mx-auto w-[210mm] h-[297mm] border print:w-full print:max-w-full print:border-0"
       :class="{
-        [`px-[${getPreset().marginLeft}mm]`]: true,
-        [`py-[${getPreset().marginTop}mm]`]: true
+        'bg-red-400': borderToggle,
+        [`w-[${activePreset.pageWidth}mm]`]: true,
+        [`h-[${activePreset.pageHeight}mm]`]: true,
+        [`pl-[${activePreset.marginLeft}mm]`]: true,
+        [`pr-[${activePreset.marginRight}mm]`]: true,
+        [`pt-[${activePreset.marginTop}mm]`]: true,
+        [`pb-[${activePreset.marginBottom}mm]`]: true
       }"
     >
-      <!-- Display QR Code Labels -->
-      <ol 
-        class="grid"
+
+      <div
+        class="mx-auto bg-white overflow-hidden"
         :class="{
-          [`grid-cols-${getPreset().columns}`]: true,
-          [`gap-x-[${getPreset().gapX}mm]`]: true,
+          [`!w-[${activePreset.pageWidth - activePreset.marginLeft - activePreset.marginRight}mm]`]: true,
+          [`!h-[${activePreset.pageHeight - activePreset.marginTop - activePreset.marginBottom}mm]`]: true
         }"
       >
-        <template x-for="label in labels">
-          <li 
-            :class="{
-              [`h-[${getPreset().labelHeight}mm]`]: true,
-              [`w-[${getPreset().labelWidth}mm]`]: true
-            }"
-          >
-            <div
-              class="flex items-center odd:border-blue-500 even:border-red-300"
+        <!-- Display Barcode Labels -->
+        <ol 
+          class="grid"
+          :class="{
+            [`grid-cols-${activePreset.columns}`]: true,
+            [`gap-x-[${activePreset.gapX}mm]`]: true,
+            [`gap-y-[${activePreset.gapY}mm]`]: true,
+          }"
+        >
+          <template x-for="label in labels">
+            <li 
+              class="flex justify-center items-center odd:border-blue-500 even:border-red-300"
               :class="{
+                [`border-[${activePreset.borderWidth}mm]`]: true,
                 'even:border-transparent odd:border-transparent': !borderToggle,
-                [`h-[${getPreset().contentHeight}mm]`]: true,
-                [`w-[${getPreset().contentWidth}mm]`]: true,
-                [`border-[${getPreset().borderWidth}mm]`]: true,
+                [`h-[${activePreset.labelHeight}mm]`]: true,
+                [`w-[${activePreset.labelWidth}mm]`]: true
               }"
             >
-              <canvas
-                x-init="generateBarcode($el, label.text)"
-                alt=""
-                width="100"
-                height="100"
-                class="aspect-square flex-none"
-                :class="{
-                  [`h-[${getPreset().barcodeSize}mm]`]: true,
-                  [`w-[${getPreset().barcodeSize}mm]`]: true,
-                  [`mr-[${getPreset().barcodeMarginRight}mm]`]: true,
-                }"
-                referrerpolicy="no-referrer"
-              ></canvas>
               <div
-                class="flex-grow"
+                class="flex justify-left items-center"
                 :class="{
-                'text-[3.9mm]': label.text.length <= 6,
-                'text-[3.2mm]': label.text.length == 7,
-                'text-[2.7mm]': label.text.length == 8,
-                'text-[2.4mm]': label.text.length == 9,
-                'text-[2.1mm]': label.text.length >= 10,
-              }"
-                x-text="label.text"
-              ></div>
-            </div>
-          </li>
-        </template>
-      </ol>
+                  'flex-col': !barcodeIsSquare,
+                  [`h-[${activePreset.contentHeight}mm]`]: true,
+                  [`w-[${activePreset.contentWidth}mm]`]: true,
+                }"
+              >
+                <canvas
+                  x-effect="generateBarcode($el, label.text)"
+                  alt=""
+                  class="aspect-square flex-none"
+                  :class="{
+                    [`w-[${activePreset.squareBarcodeSize}mm] h-[${activePreset.squareBarcodeSize}mm] mr-[${activePreset.squareBarcodeMarginRight}mm]`]: barcodeIsSquare,
+                    [`w-[100%] h-[100%] p-[${activePreset.linearBarcodePadding}mm]`]: !barcodeIsSquare,
+                  }"
+                  referrerpolicy="no-referrer"
+                ></canvas>
+                <div
+                  class="bg-white z-10 p-[0.5mm] pb-[1mm] leading-none"
+                  :class="{
+                  [`text-[2.2mm] translate-y-[-100%] mt-[0.5mm]`]: !barcodeIsSquare,
+                  'text-[3.9mm]': barcodeIsSquare && label.text.length <= 6,
+                  'text-[3.2mm]': barcodeIsSquare && label.text.length == 7,
+                  'text-[2.7mm]': barcodeIsSquare && label.text.length == 8,
+                  'text-[2.4mm]': barcodeIsSquare && label.text.length == 9,
+                  'text-[2.1mm]': barcodeIsSquare && label.text.length >= 10,
+                }"
+                  x-text="label.text"
+                ></div>
+              </div>
+            </li>
+          </template>
+        </ol>
+      </div>
     </div>
 
     <footer class="mt-8 bg-gray-200 py-4 text-center print:hidden">
@@ -303,10 +336,21 @@
           leadingZeros: 4,
           borderToggle: false,
           labels: [],
+          activePreset: Alpine.reactive({}),
           selectedPreset: "Avery L4731REV-25",
-          selectedPresetOptions: null,
+          barcodeType: 'qrcode',
+          get barcodeIsSquare() {
+            if (this.barcodeType === "code128") {
+              return false;
+            }
+
+            return true;
+          },
           presets: {
             "Avery L4731REV-25": {
+              pageWidth: 210,
+              pageHeight: 297,
+
               columns: 7,
               rows: 27,
 
@@ -319,22 +363,51 @@
               labelHeight: 10,
 
               gapX: 2.55,
+              gapY: 0,
 
               contentWidth: 24.4,
               contentHeight: 9,
-              barcodeSize: 9,
-              barcodeMarginRight: 0.5,
+
+              squareBarcodeSize: 9,
+              squareBarcodeMarginRight: 0.5,
+              linearBarcodePadding: 1.5,
+
+              borderWidth: 0.5
+            },
+            "STAFF 115666 (189pcs/page 25.4x10mm)": {
+              pageWidth: 210,
+              pageHeight: 297,
+
+              columns: 7,
+              rows: 27,
+
+              marginLeft: 10,
+              marginRight: 10,
+              marginTop: 5,
+              marginBottom: 5,
+
+              labelWidth: 25.4,
+              labelHeight: 10,
+
+              gapX: 1.742857, // (width-marginLeft-marginRight-labelWidth*columns)/columns
+              gapY: 0.629629,
+
+              contentWidth: 24.4,
+              contentHeight: 9,
+
+              squareBarcodeSize: 7,
+              squareBarcodeMarginRight: 0.5,
+              linearBarcodePadding: 1.5,
+
               borderWidth: 0.5
             }
           },
-
-          getPreset() {
-            return this.presets[this.selectedPreset];
+          applySelectedPreset() {
+            this.activePreset = this.presets[this.selectedPreset];
           },
-
           generateLabels() {
             this.labels = [];
-            let preset = this.getPreset();
+            let preset = this.activePreset;
             let totalLabels = preset.columns * preset.rows;
             let startNumberInt = parseInt(this.startNumber, 10); // Ensure startNumber is an integer
             let leadingZerosInt = parseInt(this.leadingZeros, 10); // Ensure leadingZeros is an integer
@@ -345,7 +418,7 @@
                 .padStart(leadingZerosInt + 1, "0");
               let text = this.prefix + paddedNumber;
               // See https://goqr.me/api/doc/create-qr-code/
-              // let qrCodeUrl = this.generateBarcode(text, preset.barcodeSize);
+              // let qrCodeUrl = this.generateBarcode(text, preset.squareBarcodeSize);
 
               this.labels.push({ text });
             }
@@ -353,11 +426,11 @@
           generateBarcode(element, string) {
             try {
               bwipjs.toCanvas(element, {
-                      bcid:        'datamatrix',
+                      bcid:        this.barcodeType,
                       text:        string,
                       scale:       1,
-                      height:      this.getPreset().barcodeSize,
-                      includetext: false,
+                      height:      this.activePreset.squareBarcodeSize,
+                      includetext: false
                   });
             } catch (e) {
               console.error("Failed to generate barcode for ", string, e);
@@ -367,6 +440,7 @@
             window.print();
           },
           init() {
+            this.applySelectedPreset();
             this.generateLabels();
           },
         };
