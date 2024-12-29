@@ -2,7 +2,9 @@
 
 > [!NOTE]  
 > This is a fork of original Tobias L. Maier [QR Code Label Generator](https://github.com/tmaier/asn-qr-code-label-generator).
+>
 > This version adds support of **STAFF 1156668** template and introduces MicroQR and Code128 barcode support.
+>
 > Also **Safety zone** setting introduced to ensure that no barcode overflows the label borders if your printer has bad precision.
 
 
