@@ -1,10 +1,16 @@
-# QR Code Label Generator for ASNs in Paperless-ngx
+# QR/MicroQR/Code128 barcode Label Generator for ASNs in Paperless-ngx
+
+> [!NOTE]  
+> This is a fork of original Tobias L. Maier [QR Code Label Generator](https://github.com/tmaier/asn-qr-code-label-generator).
+> This version adds support of **STAFF 1156668** template and introduces MicroQR and Code128 barcode support.
+> Also **Safety zone** setting introduced to ensure that no barcode overflows the label borders if your printer has bad precision.
+
 
 ## About the Project
 
-This project is a web-based QR code label generator specifically designed for generating Archive Serial Number (ASN) labels in Paperless-ngx. It's a simple and efficient tool aimed at streamlining the process of creating QR code labels for document management.
+This project is a web-based QR/MicroQR/Code128 barcode label generator specifically designed for generating Archive Serial Number (ASN) labels in Paperless-ngx. It's a simple and efficient tool aimed at streamlining the process of creating QR/MicroQR/Code128 code labels for document management.
 
-A live version of this application can be accessed at <https://tobiasmaier.info/asn-qr-code-label-generator/>.
+A live version of this application can be accessed at <https://maksimkurb.github.io/asn-barcode-label-generator/>.
 
 ### Current Status
 
@@ -16,6 +22,7 @@ Users are encouraged to validate the output, especially the positioning of the l
 The application currently supports the following label formats:
 
 - Avery L4731REV-25 (See [UK shop](https://www.avery.co.uk/product/mini-multipurpose-labels-l4731rev-25), [DE shop](https://www.avery-zweckform.com/produkt/universal-etiketten-l4731rev-25))
+- STAFF 115666 (189 labels) (See [RU shop](https://www.vseinstrumenti.ru/product/etiketka-samokleyaschayasya-staff-25-4x10mm-189-etiketok-belaya-80g-m2-50-listov-basic-115666-15347920/), [Wildberries](https://www.wildberries.ru/catalog/254336586/detail.aspx))
 
 ### Limitations
 
@@ -39,7 +46,7 @@ The application currently has the following limitations:
 
 Contributions to this project are welcome.
 If you have ideas for improvements or have found bugs, please feel free to contribute.
-You can submit your contributions via GitHub at <https://github.com/tmaier/asn-qr-code-label-generator>.
+You can submit your contributions via GitHub at <https://github.com/maksimkurb/asn-barcode-label-generator>.
 
 ## Acknowledgments
 
@@ -54,3 +61,4 @@ Additionally, this project drew inspiration from the CLI tool [paperless-asn-qr-
 This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](https://www.gnu.org/licenses/agpl-3.0.html).
 
 All rights reserved by [Tobias L. Maier](https://tobiasmaier.info).
+Fork by [Maxim Kurbatov](https://kurb.me).

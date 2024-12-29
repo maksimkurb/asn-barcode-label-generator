@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QR Code Label Generator for ASN in Paperless-ngx</title>
+    <title>QR/MicroQR/Code128 barcode Label Generator for ASN in Paperless-ngx</title>
     <link
       rel="canonical"
-      href="https://tobiasmaier.info/asn-qr-code-label-generator/"
+      href="https://maksimkurb.github.io/asn-barcode-label-generator/"
     />
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <script 
@@ -191,6 +191,31 @@
             </select>
           </div>
           <div>
+            <label
+              for="safetyZone"
+              class="mb-2 block text-sm font-medium text-gray-900"
+              >Safety zone</label
+            >
+            <input
+              id="safetyZone"
+              x-model="safetyZone"
+              type="number"
+              min="0.0"
+              max="10.0"
+              step="0.2"
+              required
+              class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+            />
+            <div class="mt-1">
+              <p
+                class="prose prose-sm prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-700 max-w-none"
+              >
+              If your printer has poor precision (e.g., your paper sheet is slightly rotated during printing), 
+              you can add extra safe spacing to each label to ensure that no barcode overflows the label borders.
+              </p>
+            </div>
+          </div>
+          <div>
             <div class="flex items-start">
               <div class="flex h-5 items-center">
                 <input
@@ -273,17 +298,16 @@
                 class="flex justify-left items-center"
                 :class="{
                   'flex-col': !barcodeIsSquare,
-                  [`h-[${activePreset.contentHeight}mm]`]: true,
-                  [`w-[${activePreset.contentWidth}mm]`]: true,
+                  [`h-[100%] p-[${activePreset.contentPadding + parseFloat(safetyZone)}mm]`]: true,
                 }"
               >
                 <canvas
                   x-effect="generateBarcode($el, label.text)"
                   alt=""
-                  class="aspect-square flex-none"
+                  class="flex-none h-[100%]"
                   :class="{
-                    [`w-[${activePreset.squareBarcodeSize}mm] h-[${activePreset.squareBarcodeSize}mm] mr-[${activePreset.squareBarcodeMarginRight}mm]`]: barcodeIsSquare,
-                    [`w-[100%] h-[100%] p-[${activePreset.linearBarcodePadding}mm]`]: !barcodeIsSquare,
+                    [`aspect-square mr-[${activePreset.squareBarcodeMarginRight}mm]`]: barcodeIsSquare,
+                    [`max-w-[100%] px-[${activePreset.linearBarcodePadding}mm]`]: !barcodeIsSquare,
                   }"
                   referrerpolicy="no-referrer"
                 ></canvas>
@@ -308,11 +332,15 @@
 
     <footer class="mt-8 bg-gray-200 py-4 text-center print:hidden">
       <p>
-        &copy; 2023
+        &copy; 2024
         <a
           href="https://tobiasmaier.info"
           class="text-blue-600 underline hover:text-blue-700"
           >Tobias L. Maier</a
+        >, <a
+          href="https://kurb.me"
+          class="text-blue-600 underline hover:text-blue-700"
+          >Maxim Kurbatov</a
         >. All rights reserved. Licensed under the
         <a
           href="https://www.gnu.org/licenses/agpl-3.0.html"
@@ -321,7 +349,7 @@
           >AGPL v3.0</a
         >.
         <a
-          href="https://github.com/tmaier/asn-qr-code-label-generator"
+          href="https://github.com/maksimkurb/asn-barcode-label-generator"
           class="text-blue-600 underline hover:text-blue-700"
           >Contribute via GitHub</a
         >
@@ -339,6 +367,7 @@
           activePreset: Alpine.reactive({}),
           selectedPreset: "Avery L4731REV-25",
           barcodeType: 'qrcode',
+          safetyZone: 0.0,
           get barcodeIsSquare() {
             if (this.barcodeType === "code128") {
               return false;
@@ -365,8 +394,7 @@
               gapX: 2.55,
               gapY: 0,
 
-              contentWidth: 24.4,
-              contentHeight: 9,
+              contentPadding: 0.5,
 
               squareBarcodeSize: 9,
               squareBarcodeMarginRight: 0.5,
@@ -392,10 +420,9 @@
               gapX: 1.742857, // (width-marginLeft-marginRight-labelWidth*columns)/columns
               gapY: 0.629629,
 
-              contentWidth: 24.4,
-              contentHeight: 9,
+              contentPadding: 0.5,
 
-              squareBarcodeSize: 7,
+              squareBarcodeSize: 9,
               squareBarcodeMarginRight: 0.5,
               linearBarcodePadding: 1.5,
 
